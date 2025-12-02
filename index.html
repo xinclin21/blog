@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>我的 Markdown 博客</title>
+  <link href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 40px;
+      line-height: 1.6;
+      background: #f6f8fa;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #1a1a1a;
+      border-bottom: 1px solid #eaecef;
+      padding-bottom: 10px;
+    }
+    details {
+      margin-bottom: 20px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #eaecef;
+      border-radius: 8px;
+    }
+    summary {
+      font-weight: 600;
+      color: #007acc;
+      cursor: pointer;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .posts {
+      display: grid;
+      gap: 20px;
+    }
+    .post-card {
+      background: #fff;
+      padding: 24px;
+      border: 1px solid #eaecef;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .post-title {
+      font-size: 24px;
+      margin: 0 0 12px;
+      color: #1a1a1a;
+    }
+    .post-title a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .post-title a:hover {
+      text-decoration: underline;
+    }
+    .post-meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .post-excerpt {
+      color: #555;
+      margin-bottom: 16px;
+    }
+    .read-more {
+      color: #007acc;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .read-more:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✍️ 我的博客</h1>
+
+    <!-- 发布新文章 -->
+    <details>
+      <summary>写新文章</summary>
+      <div>
+        <input type="text" id="title" placeholder="文章标题" />
+        <textarea id="content" placeholder="用 Markdown 写点什么... 支持 **粗体**、*斜体*、\`代码\`、[链接](#)"></textarea>
+        <button onclick="publish()">发布文章</button>
+      </div>
+    </details>
+
+    <!-- 文章列表 -->
+    <main id="posts" class="posts"></main>
+  </div>
+
+  <script type="module">
+    import { marked } from 'https://cdn.jsdelivr.net/npm/marked/+esm';
+
+    const API_BASE = '/api';
+
+    // 加载文章列表
+    async function loadPosts() {
+      try {
+        const res = await fetch(`${API_BASE}/posts`);
+        const posts = await res.json();
+        const container = document.getElementById('posts');
+        
+        container.innerHTML = posts.map(post => `
+          <article class="post-card">
+            <h2 class="post-title"><a href="read.html?id=${post.id}">${post.title}</a></h2>
+            <div class="post-meta">发布于 ${new Date(post.createdAt).toLocaleString()}</div>
+            <div class="post-excerpt">${post.excerpt}</div>
+            <a href="read.html?id=${post.id}" class="read-more">继续阅读 →</a>
+          </article>
+        `).join('');
+      } catch (error) {
+        console.error('加载文章失败:', error);
+        document.getElementById('posts').innerHTML = '<p>文章加载失败，请刷新重试。</p>';
+      }
+    }
+
+    // 发布新文章
+    async function publish() {
+      const titleInput = document.getElementById('title');
+      const contentInput = document.getElementById('content');
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+
+      if (!title || !content) {
+        alert('标题和内容不能为空！');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/post`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content })
+        });
+
+        if (res.ok) {
+          alert('发布成功！');
+          titleInput.value = '';
+          contentInput.value = '';
+          loadPosts();
+        } else {
+          alert('发布失败，请重试。');
+        }
+      } catch (error) {
+        console.error('发布文章出错:', error);
+        alert('网络错误，发布失败。');
+      }
+    }
+
+    // 页面加载时获取文章列表
+    loadPosts();
+  </script>
+</body>
+</html>

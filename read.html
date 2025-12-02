@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>阅读文章</title>
+  <link href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown-light.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background: #f6f8fa;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      background: #fff;
+      border: 1px solid #eaecef;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .back {
+      color: #007acc;
+      text-decoration: none;
+      margin-bottom: 20px;
+      display: inline-block;
+      font-size: 14px;
+    }
+    .title {
+      font-size: 32px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .meta {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+    @media (max-width: 767px) {
+      .markdown-body {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back">← 返回首页</a>
+    <div id="post"></div>
+  </div>
+
+  <script type="module">
+    import { marked } from 'https://cdn.jsdelivr.net/npm/marked/+esm';
+
+    // 获取 URL 中的文章 ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+      document.getElementById('post').innerHTML = '<p>文章不存在或链接错误。</p>';
+      throw new Error('文章 ID 未提供');
+    }
+
+    // 请求文章数据
+    const res = await fetch(`/api/post/${id}`);
+    if (!res.ok) {
+      document.getElementById('post').innerHTML = '<p>文章加载失败，可能已被删除。</p>';
+      throw new Error('文章加载失败');
+    }
+    const post = await res.json();
+
+    // 渲染文章
+    document.getElementById('post').innerHTML = `
+      <h1 class="title">${post.title}</h1>
+      <div class="meta">发布时间: ${new Date(post.createdAt).toLocaleString()}</div>
+      <div class="markdown-body">${post.content}</div>
+    `;
+  </script>
+</body>
+</html>
